@@ -1,6 +1,5 @@
 import torch
 import lightning as L
-# from transformers import DistilBertTokenizer, DistilBertModel
 from torchmetrics.classification import MultilabelF1Score, MultilabelAUROC
 import torch.nn as nn
 import numpy as np
