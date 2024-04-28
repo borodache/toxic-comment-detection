@@ -3,30 +3,30 @@ import lightning as L
 from torchmetrics.classification import MultilabelF1Score, MultilabelAUROC
 import torch.nn as nn
 import numpy as np
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from pickle import load
 
 user_name_hugging_face = "borodache"
-model_name_hugging_face = "distilBERT_toxic_detector"
+model_name_hugging_face = "distilBERT_toxic_detector_multi_label"
 LABEL_COLUMNS = ["nsfw", "hate_speech", "bullying"]
 n_labels = len(LABEL_COLUMNS)
 learning_rate = 1e-5
-token_huggingface = "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"
+id2label=dict(zip(range(n_labels), LABEL_COLUMNS))
+label2id=dict(zip(LABEL_COLUMNS, range(n_labels)))
 
 
 class MultiLabelDetectionModel(L.LightningModule):
     def __init__(self, model_name=model_name_hugging_face, n_labels = n_labels):
-        # print("I am in MultiLabelDetectionModel.__init__")
         super().__init__()
         self.save_hyperparameters()
         self.n_labels = n_labels
-        self.tokenizer = AutoTokenizer.from_pretrained(f"{user_name_hugging_face}/{model_name}",
-                                                       token=token_huggingface)
-        self.model = AutoModel.from_pretrained(f"{user_name_hugging_face}/{model_name}",
-                                          token=token_huggingface)
-        # self.classifier = nn.Linear(self.model.config.hidden_size, n_labels)
-        with open("top_layer_classifier.pkl", 'rb') as pickle_file:
-            self.classifier = load(pickle_file)
+        self.tokenizer = AutoTokenizer.from_pretrained(f"{user_name_hugging_face}/{model_name}")
+        self.model = AutoModelForSequenceClassification.from_pretrained(f"{user_name_hugging_face}/{model_name}",
+                                                                        num_labels=n_labels,
+                                                                        id2label=id2label,
+                                                                        label2id=label2id,
+                                                                        problem_type="multi_label_classification")
+                                                                        # token=token_model)
         self.criterion = nn.BCEWithLogitsLoss()
         self.auroc = MultilabelAUROC(n_labels)
         self.multi_label_f1 = MultilabelF1Score(n_labels)
@@ -44,11 +44,8 @@ class MultiLabelDetectionModel(L.LightningModule):
     def forward(self, input_ids, attention_mask):
         # print("I am in forward")
         outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
-        last_hidden_state = outputs[0]
-        pooler = last_hidden_state[:, 0]
-        logits = self.classifier(pooler)
 
-        return logits
+        return outputs.logits
 
     def training_step(self, batch, batch_idx):
         # print("I am in training_step")
@@ -64,8 +61,10 @@ class MultiLabelDetectionModel(L.LightningModule):
 
         return loss
 
-    def on_training_epoch_end(self):
+    def on_training_epoch_end(self, outputs):
         print("I am in on_training_epoch_end")
+        print("outputs: ")
+        print(outputs)
         if self.train_loss:
             avg_loss = torch.stack(self.train_loss).mean()
             self.log("training/loss_epoch:", avg_loss, prog_bar=True, logger=True)
@@ -157,9 +156,7 @@ class MultiLabelDetectionModel(L.LightningModule):
         rets = []
         with torch.no_grad():
             outputs = self.model(**inputs)
-            last_hidden_state = outputs[0]
-            pooler = last_hidden_state[:, 0]
-            logits = self.classifier(pooler)
+            logits = outputs.logits
             predictions = torch.sigmoid(logits)
 
             for i, prediction in enumerate(np.array(predictions[0])):
