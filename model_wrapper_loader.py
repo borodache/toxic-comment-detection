@@ -4,15 +4,15 @@ from torchmetrics.classification import MultilabelF1Score, MultilabelAUROC
 import torch.nn as nn
 import numpy as np
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from pickle import load
+
 
 user_name_hugging_face = "borodache"
 model_name_hugging_face = "distilBERT_toxic_detector_multi_label"
 LABEL_COLUMNS = ["nsfw", "hate_speech", "bullying"]
 n_labels = len(LABEL_COLUMNS)
 learning_rate = 1e-5
-id2label=dict(zip(range(n_labels), LABEL_COLUMNS))
-label2id=dict(zip(LABEL_COLUMNS, range(n_labels)))
+id2label = dict(zip(range(n_labels), LABEL_COLUMNS))
+label2id = dict(zip(LABEL_COLUMNS, range(n_labels)))
 
 
 class MultiLabelDetectionModel(L.LightningModule):
