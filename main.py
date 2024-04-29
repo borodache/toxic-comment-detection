@@ -2,6 +2,8 @@ from telegram.ext import Updater, MessageHandler, CallbackContext, Filters
 from telegram import Update
 from model_wrapper_loader import MultiLabelDetectionModel, load_model_wrapper
 
+
+print("I am starting main.py file")
 model_wrapper = load_model_wrapper()
 token_bot = "6983089788:AAEjOhXKEvSfct9sfsAE5nEOMUnOiTFhR04"
 

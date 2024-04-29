@@ -6,6 +6,7 @@ import numpy as np
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 
+print("I am starting model_wrapper_loader.py file")
 user_name_hugging_face = "borodache"
 model_name_hugging_face = "distilBERT_toxic_detector_multi_label"
 LABEL_COLUMNS = ["nsfw", "hate_speech", "bullying"]
@@ -26,7 +27,6 @@ class MultiLabelDetectionModel(L.LightningModule):
                                                                         id2label=id2label,
                                                                         label2id=label2id,
                                                                         problem_type="multi_label_classification")
-                                                                        # token=token_model)
         self.criterion = nn.BCEWithLogitsLoss()
         self.auroc = MultilabelAUROC(n_labels)
         self.multi_label_f1 = MultilabelF1Score(n_labels)
