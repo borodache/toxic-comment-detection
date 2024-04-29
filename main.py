@@ -1,17 +1,25 @@
 from telegram.ext import Updater, MessageHandler, CallbackContext, Filters
 from telegram import Update
-from model_wrapper_loader import MultiLabelDetectionModel, load_model_wrapper
+from huggingface_hub import InferenceClient
 import os
 
 pid = os.getpid()
 print(f"I am starting main.py file - {pid}")
+
+# parameters
+user_name_hugging_face = "borodache"
+model_name_hugging_face = "distilBERT_toxic_detector_multi_label"
+token_model = "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"
+
 try:
-    model_wrapper = load_model_wrapper()
+    client = InferenceClient(model=f"{user_name_hugging_face}/{model_name_hugging_face}", token=token_model)
 except Exception as e:
     print("Exception: ")
     print(e)
-print("I am after load_model_wrapper")
+
+print("I am after InferenceClient")
 token_bot = "6983089788:AAEjOhXKEvSfct9sfsAE5nEOMUnOiTFhR04"
+LABEL_COLUMNS = ["nsfw", "hate_speech", "bullying"]
 
 
 def get_full_name(message):
@@ -23,12 +31,35 @@ def get_full_name(message):
     return first_name + ' ' + last_name
 
 
+def convert_model_output_score_to_prediction(results):
+    lst_rets = []
+
+    for i, result in enumerate(results):
+        score = result.score
+
+        if score >= 0.5:
+            lst_rets.append(LABEL_COLUMNS[i].replace("_", " "))
+
+    if len(lst_rets) == 0:
+        ret = "This message was approved"
+    elif 1 == len(lst_rets):
+        ret = f"This message was {lst_rets[0]}"
+    elif 2 == len(lst_rets):
+        ret = f"This message was {lst_rets[0]} and {lst_rets[1]}"
+    else:
+        ret = f"This message was {lst_rets[0]}, {lst_rets[1]}, and {lst_rets[2]}"
+
+    return ret
+
+
+
 # Define a function to handle the messages that the bot receives
 def text_handler(update: Update, context: CallbackContext):
     # Get the message from the update
     message = update.message
 
-    str_prediction = model_wrapper.predict(message.text)
+    results = client.text_classification(message.text)
+    str_prediction = convert_model_output_score_to_prediction(results)
     if str_prediction != "This message was approved":
         full_name = get_full_name(message)
         str_prediction = full_name + ': ' + str_prediction.lower()
