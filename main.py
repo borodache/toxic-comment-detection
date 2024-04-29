@@ -10,6 +10,8 @@ print(f"I am starting main.py file - {pid}")
 user_name_hugging_face = "borodache"
 model_name_hugging_face = "distilBERT_toxic_detector_multi_label"
 token_model = "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"
+token_bot = "6983089788:AAEjOhXKEvSfct9sfsAE5nEOMUnOiTFhR04"
+LABEL_COLUMNS = ["nsfw", "hate_speech", "bullying"]
 
 try:
     client = InferenceClient(model=f"{user_name_hugging_face}/{model_name_hugging_face}", token=token_model)
@@ -18,8 +20,6 @@ except Exception as e:
     print(e)
 
 print("I am after InferenceClient")
-token_bot = "6983089788:AAEjOhXKEvSfct9sfsAE5nEOMUnOiTFhR04"
-LABEL_COLUMNS = ["nsfw", "hate_speech", "bullying"]
 
 
 def get_full_name(message):
@@ -50,7 +50,6 @@ def convert_model_output_score_to_prediction(results):
         ret = f"This message was {lst_rets[0]}, {lst_rets[1]}, and {lst_rets[2]}"
 
     return ret
-
 
 
 # Define a function to handle the messages that the bot receives
