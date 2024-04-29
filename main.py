@@ -3,7 +3,7 @@ from telegram import Update
 from model_wrapper_loader import MultiLabelDetectionModel, load_model_wrapper
 
 model_wrapper = load_model_wrapper()
-token_bot = "TOKEN_BOT"
+token_bot = "6983089788:AAEjUsaehsFtqWrCrfhCT42gksqcKCFJwt0"
 
 
 def get_full_name(message):
