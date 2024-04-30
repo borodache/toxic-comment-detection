@@ -3,14 +3,15 @@ from telegram import Update
 from huggingface_hub import InferenceClient
 import os
 
+token_model = "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"
+token_bot = "6983089788:AAEjOhXKEvSfct9sfsAE5nEOMUnOiTFhR04"
+
 pid = os.getpid()
 print(f"I am starting main.py file - {pid}")
 
 # parameters
 user_name_hugging_face = "borodache"
 model_name_hugging_face = "distilBERT_toxic_detector_multi_label"
-token_model = "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"
-token_bot = "6983089788:AAEjOhXKEvSfct9sfsAE5nEOMUnOiTFhR04"
 LABEL_COLUMNS = ["nsfw", "hate_speech", "bullying"]
 
 try:
@@ -34,11 +35,9 @@ def get_full_name(message):
 def convert_model_output_score_to_prediction(results):
     lst_rets = []
 
-    for i, result in enumerate(results):
-        score = result.score
-
-        if score >= 0.5:
-            lst_rets.append(LABEL_COLUMNS[i].replace("_", " "))
+    for result in results:
+        if result.score >= 0.5:
+            lst_rets.append(result.label.replace("_", " "))
 
     if len(lst_rets) == 0:
         ret = "This message was approved"
@@ -54,11 +53,16 @@ def convert_model_output_score_to_prediction(results):
 
 # Define a function to handle the messages that the bot receives
 def text_handler(update: Update, context: CallbackContext):
+    print("I am in text_handler")
     # Get the message from the update
     message = update.message
 
     results = client.text_classification(message.text)
+    print(f"the message: {message.text}")
+    print(f"got results: {results}")
     str_prediction = convert_model_output_score_to_prediction(results)
+    print(f"str_prediction: {str_prediction}")
+    print("---")
     if str_prediction != "This message was approved":
         full_name = get_full_name(message)
         str_prediction = full_name + ': ' + str_prediction.lower()
