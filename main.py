@@ -9,10 +9,9 @@ token_bot = "6983089788:AAEjOhXKEvSfct9sfsAE5nEOMUnOiTFhR04"
 pid = os.getpid()
 print(f"I am starting main.py file - {pid}")
 
-# parameters
+# credentials
 user_name_hugging_face = "borodache"
 model_name_hugging_face = "distilBERT_toxic_detector_multi_label"
-LABEL_COLUMNS = ["nsfw", "hate_speech", "bullying"]
 
 try:
     client = InferenceClient(model=f"{user_name_hugging_face}/{model_name_hugging_face}", token=token_model)
@@ -20,16 +19,25 @@ except Exception as e:
     print("Exception: ")
     print(e)
 
-print("I am after InferenceClient")
+print("I am after connection to my model in HuggingFace")
 
 
 def get_full_name(message):
     first_name = message.from_user.first_name
-    first_name = first_name[0].upper() + first_name[1:]
+    if first_name:
+        first_name = first_name[0].upper() + first_name[1:]
     last_name = message.from_user.last_name
-    last_name = last_name[0].upper() + last_name[1:]
+    if last_name:
+        last_name = last_name[0].upper() + last_name[1:]
 
-    return first_name + ' ' + last_name
+    if first_name and last_name:
+        return first_name + ' ' + last_name
+    elif first_name:
+        return first_name
+    elif last_name:
+        return last_name
+    else:
+        return "Anonymous user"
 
 
 def convert_model_output_score_to_prediction(results):
@@ -61,15 +69,16 @@ def text_handler(update: Update, context: CallbackContext):
     print(f"the message: {message.text}")
     print(f"got results: {results}")
     str_prediction = convert_model_output_score_to_prediction(results)
-    print(f"str_prediction: {str_prediction}")
-    print("---")
     if str_prediction != "This message was approved":
+        message.delete()
         full_name = get_full_name(message)
         str_prediction = full_name + ': ' + str_prediction.lower()
-        message.delete()
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text=str_prediction)
-        return
+
+    print(f"str_prediction: {str_prediction}")
+    print("---")
+    return
 
 
 def photo_handler(update: Update, context: CallbackContext):
