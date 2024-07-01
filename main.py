@@ -3,8 +3,8 @@ from telegram import Update
 from huggingface_hub import InferenceClient
 import os
 
-token_model = "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"
-token_bot = "6983089788:AAEjOhXKEvSfct9sfsAE5nEOMUnOiTFhR04"
+token_model = "token_model"
+token_bot = "token_bot"
 
 pid = os.getpid()
 print(f"I am starting main.py file - {pid}")
